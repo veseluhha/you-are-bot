@@ -3,7 +3,8 @@
 1. Подготовка данных: ручные признаки + перплексия LLM (кэшируется).
 2. Fine-tune rubert-tiny2 по фолдам -> OOF-предсказания для стекинга (отдельный процесс).
 3. Обучение всех конфигов из configs/*.yaml.
-4. Онлайн-постановка: качество по первым k репликам диалога.
+4. Стекинг второго уровня по configs/stack/*.yaml.
+5. Онлайн-постановка: качество по первым k репликам диалога.
 
 Все запуски попадают в MLflow как дочерние к одному родительскому run `pipeline`. Лучший
 по cv_logloss сабмит копируется в outputs/submission.csv.
@@ -19,10 +20,10 @@ from pathlib import Path
 import mlflow
 import pandas as pd
 
-from youarebot import prefix
+from youarebot import prefix, stack
 from youarebot.prepare import prepare
 from youarebot.train import train
-from youarebot.utils import EXPERIMENT, PARENT_RUN_ENV, PROJECT_ROOT, git_commit
+from youarebot.utils import EXPERIMENT, PARENT_RUN_ENV, PROJECT_ROOT, git_commit, load_config
 
 CONFIGS = PROJECT_ROOT / "configs"
 
@@ -61,6 +62,12 @@ if __name__ == "__main__":
                 check=True,
             )
         results = [train(path) for path in configs]
+        trained = {r["run_name"] for r in results}
+        for path in sorted((CONFIGS / "stack").glob("*.yaml")):
+            cfg = load_config(path)
+            # стекинг только поверх моделей, обученных в этом же прогоне
+            if set(cfg["members"]) <= trained and not (cfg["transformer"] and args.no_transformer):
+                results.append(stack.run(path))
 
         board = pd.DataFrame(results).sort_values("cv_logloss").reset_index(drop=True)
         board_path = PROJECT_ROOT / "outputs" / "leaderboard.csv"

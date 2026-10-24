@@ -173,7 +173,9 @@ def train(config_path: Path, out_root: Path | None = None) -> dict:
             # skops по умолчанию не доверяет типам lightgbm, модели свои — берём cloudpickle
             serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE,
             input_example=example,
-            signature=infer_signature(example, pipe.predict_proba(example)[:, 1]),
+            # сервис ждёт вероятности, а не метки: pyfunc-модель отдаёт predict_proba
+            pyfunc_predict_fn="predict_proba",
+            signature=infer_signature(example, pipe.predict_proba(example)),
         )
         run_id = mlflow.active_run().info.run_id
 

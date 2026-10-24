@@ -5,6 +5,7 @@ cd "$(dirname "$0")"
 
 export MLFLOW_TRACKING_URI="${MLFLOW_TRACKING_URI:-sqlite:///mlflow.db}"
 export MLFLOW_DISABLE_AGENT_HINT=1
+export PYTHONUNBUFFERED=1  # прогресс в логе сразу, а не при завершении
 
 for f in train.json ytrain.csv test.json ytest.csv; do
     [[ -f "data/raw/$f" ]] || { echo "нет data/raw/$f — см. README" >&2; exit 1; }

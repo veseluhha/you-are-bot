@@ -1,0 +1,7 @@
+# второй уровень: логрег на логитах OOF модели пары (11) и дообученного rubert-tiny2
+run_name: 16_stack_pair_bert
+seed: 42
+cv: {n_splits: 5}
+members: [11_pair_lgbm_swap]
+transformer: true
+C: 1.0

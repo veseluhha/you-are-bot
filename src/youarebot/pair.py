@@ -72,3 +72,7 @@ class PairClassifier(ClassifierMixin, BaseEstimator):
             if d in proba.index:
                 out[i] = p_a[d] if p == 0 else p_b[d]
         return np.column_stack([1 - out, out])
+
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
+        # нужен MLflow для pyfunc-флейвора; в сервисе используется predict_proba
+        return (self.predict_proba(X)[:, 1] > 0.5).astype(int)

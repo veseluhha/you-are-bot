@@ -1,0 +1,7 @@
+# второй уровень на разнородных моделях: пара (11), бленд логрег+бустинг (09), rubert
+run_name: 17_stack_diverse
+seed: 42
+cv: {n_splits: 5}
+members: [11_pair_lgbm_swap, 09_blend_logreg_lgbm_tfidf, 05_tfidf_handcrafted_logreg_pair]
+transformer: true
+C: 1.0
