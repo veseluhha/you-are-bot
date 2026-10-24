@@ -1,0 +1,26 @@
+{
+  "n_dialogs_train": 1516,
+  "n_dialogs_test": 379,
+  "n_participants_train": 3032,
+  "n_participants_test": 758,
+  "bot_share": 0.40798153034300794,
+  "bots_per_dialog": {
+    "0": 279,
+    "1": 1237
+  },
+  "bot_share_by_index": {
+    "0": 0.49604221635883905,
+    "1": 0.31992084432717677
+  },
+  "bot_share_by_first_speaker": {
+    "0": 0.31992084432717677,
+    "1": 0.49604221635883905
+  },
+  "n_messages_train": 10490,
+  "empty_messages": 11,
+  "very_long_messages_gt_2000": 9,
+  "dialog_len_median_train": 6.0,
+  "dialog_len_median_test": 6.0,
+  "echo_contains_share_bot": 0.36266682109506304,
+  "echo_contains_share_human": 0.03266572695787836
+}

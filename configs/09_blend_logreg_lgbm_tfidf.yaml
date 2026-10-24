@@ -1,0 +1,22 @@
+# бленд: логрег как в 05 и бустинг как в 07 (ручные признаки + символьный TF-IDF)
+run_name: 09_blend_logreg_lgbm_tfidf
+seed: 42
+cv: {n_splits: 5}
+model:
+  name: blend
+  weights: [0.3, 0.7]
+  members:
+    - features:
+        handcrafted: true
+        partner_features: true
+        own_text_tfidf: {analyzer: char_wb, ngram_range: [2, 5], min_df: 2, max_features: 100000, sublinear_tf: true}
+        partner_text_tfidf: {analyzer: char_wb, ngram_range: [2, 5], min_df: 2, max_features: 50000, sublinear_tf: true}
+      model: {name: logreg, params: {C: 1.0, solver: liblinear, max_iter: 3000}}
+    - features:
+        handcrafted: true
+        partner_features: true
+        own_text_tfidf: {analyzer: char_wb, ngram_range: [2, 4], min_df: 5, max_features: 20000, sublinear_tf: true}
+      model:
+        name: lgbm
+        params: {n_estimators: 500, learning_rate: 0.03, num_leaves: 15, min_child_samples: 20, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.5, reg_lambda: 1.0}
+postprocess: {pair_constraint: true}

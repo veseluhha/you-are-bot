@@ -1,0 +1,7 @@
+# бейзлайн: константа = доля ботов в трейне
+run_name: 01_prior
+seed: 42
+cv: {n_splits: 5}
+features: {handcrafted: false}
+model: {name: prior}
+postprocess: {pair_constraint: false}

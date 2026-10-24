@@ -1,0 +1,7 @@
+# ручные признаки участника, без признаков собеседника
+run_name: 02_logreg_handcrafted
+seed: 42
+cv: {n_splits: 5}
+features: {handcrafted: true, partner_features: false}
+model: {name: logreg, params: {C: 1.0, solver: liblinear, max_iter: 3000}}
+postprocess: {pair_constraint: false}

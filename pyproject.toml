@@ -1,0 +1,29 @@
+[project]
+name = "youarebot"
+version = "0.1.0"
+description = "You are bot: классификация участников диалога на ботов и людей"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "lightgbm==4.7.0",
+    "matplotlib==3.11.2",
+    "mlflow==3.17.2",
+    "numpy==2.5.4",
+    "pandas==3.1.0",
+    "pyarrow==25.0.1",
+    "pyyaml==6.0.3",
+    "scikit-learn==1.9.1",
+    "scipy==1.18.1",
+]
+
+[dependency-groups]
+dev = ["ruff==0.17.2"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/youarebot"]
+
+[tool.ruff]
+line-length = 100

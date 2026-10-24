@@ -1,0 +1,11 @@
+# TF-IDF по своим и чужим репликам + ручные признаки обоих участников
+run_name: 04_tfidf_handcrafted_logreg
+seed: 42
+cv: {n_splits: 5}
+features:
+  handcrafted: true
+  partner_features: true
+  own_text_tfidf: {analyzer: char_wb, ngram_range: [2, 5], min_df: 2, max_features: 100000, sublinear_tf: true}
+  partner_text_tfidf: {analyzer: char_wb, ngram_range: [2, 5], min_df: 2, max_features: 50000, sublinear_tf: true}
+model: {name: logreg, params: {C: 1.0, solver: liblinear, max_iter: 3000}}
+postprocess: {pair_constraint: false}
