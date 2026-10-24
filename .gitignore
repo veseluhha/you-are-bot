@@ -5,3 +5,4 @@ outputs/
 mlruns/
 mlflow.db
 .DS_Store
+run.log
