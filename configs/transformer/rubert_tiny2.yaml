@@ -1,0 +1,6 @@
+# fine-tune rubert-tiny2 на диалоге с маркерами «Я:» / «Собеседник:»
+run_name: transformer_rubert_tiny2
+seed: 42
+cv: {n_splits: 5}
+model_name: cointegrated/rubert-tiny2
+params: {max_length: 256, epochs: 4, batch_size: 16, lr: 5.0e-5, weight_decay: 0.01, warmup: 0.1}

@@ -1,0 +1,13 @@
+# то же, что 07, плюс признаки перплексии LLM (Binoculars)
+run_name: 13_lgbm_tfidf_handcrafted_llm
+seed: 42
+cv: {n_splits: 5}
+features:
+  handcrafted: true
+  partner_features: true
+  llm: true
+  own_text_tfidf: {analyzer: char_wb, ngram_range: [2, 4], min_df: 5, max_features: 20000, sublinear_tf: true}
+model:
+  name: lgbm
+  params: {n_estimators: 500, learning_rate: 0.03, num_leaves: 15, min_child_samples: 20, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.5, reg_lambda: 1.0}
+postprocess: {pair_constraint: true}

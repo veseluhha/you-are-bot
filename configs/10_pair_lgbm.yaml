@@ -1,0 +1,16 @@
+# совместная модель пары: один объект — диалог, 3 исхода (нет бота / бот 0 / бот 1)
+run_name: 10_pair_lgbm
+seed: 42
+cv: {n_splits: 5}
+model:
+  name: pair
+  swap_augment: false
+  features:
+    handcrafted: true
+    partner_features: false
+    own_text_a_tfidf: {analyzer: char_wb, ngram_range: [2, 4], min_df: 5, max_features: 20000, sublinear_tf: true}
+    own_text_b_tfidf: {analyzer: char_wb, ngram_range: [2, 4], min_df: 5, max_features: 20000, sublinear_tf: true}
+  model:
+    name: lgbm
+    params: {n_estimators: 500, learning_rate: 0.03, num_leaves: 15, min_child_samples: 20, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.5, reg_lambda: 1.0}
+postprocess: {pair_constraint: false}

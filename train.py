@@ -5,7 +5,8 @@ from pathlib import Path
 
 import mlflow
 
-from youarebot.train import EXPERIMENT, train
+from youarebot.train import train
+from youarebot.utils import EXPERIMENT
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)

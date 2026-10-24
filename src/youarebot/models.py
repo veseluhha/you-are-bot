@@ -11,15 +11,26 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-TEXT_COLS = ["own_text", "partner_text"]
+KEY_COL = "dialog_id"
+
+
+def is_text(col: str) -> bool:
+    # own_text, partner_text и их варианты own_text_a / own_text_b у модели пары
+    return "_text" in col
 
 
 def numeric_columns(columns: list[str], features_cfg: dict) -> list[str]:
     if not features_cfg.get("handcrafted", True):
         return []
-    cols = [c for c in columns if c not in TEXT_COLS]
+    cols = [c for c in columns if c != KEY_COL and not is_text(c)]
     if not features_cfg.get("partner_features", True):
         cols = [c for c in cols if not c.startswith("partner_")]
+    if not features_cfg.get("llm", False):
+        # признаки перплексии LLM включаются явно, чтобы старые конфиги не меняли смысл
+        cols = [c for c in cols if "llm_" not in c]
+    if not features_cfg.get("transformer", False):
+        # OOF-предсказание дообученного трансформера — признак второго уровня (стекинг)
+        cols = [c for c in cols if "bert_p" not in c]
     return cols
 
 
@@ -45,6 +56,10 @@ def build_pipeline(cfg: dict, columns: list[str]) -> Pipeline:
         ]
         blend = VotingClassifier(members, voting="soft", weights=model_cfg.get("weights"))
         return Pipeline([("model", blend)])
+    if name == "pair":
+        from youarebot.pair import PairClassifier
+
+        return Pipeline([("model", PairClassifier(model_cfg, seed))])
 
     features_cfg = cfg["features"]
     num_cols = numeric_columns(columns, features_cfg)
@@ -53,7 +68,7 @@ def build_pipeline(cfg: dict, columns: list[str]) -> Pipeline:
         # линейной модели нужны отмасштабированные признаки, бустингу — нет
         scaler = StandardScaler() if name == "logreg" else "passthrough"
         transformers.append(("num", scaler, num_cols))
-    for col in TEXT_COLS:
+    for col in filter(is_text, columns):
         tfidf_cfg = features_cfg.get(f"{col}_tfidf")
         if tfidf_cfg:
             transformers.append((f"{col}_tfidf", _tfidf(tfidf_cfg), col))

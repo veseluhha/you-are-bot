@@ -1,9 +1,6 @@
 """Этап обучения: кросс-валидация по диалогам, финальная модель, сабмит, логи в MLflow."""
 
 import json
-import os
-import random
-import subprocess
 from pathlib import Path
 
 import matplotlib
@@ -11,63 +8,25 @@ import mlflow
 import mlflow.sklearn
 import numpy as np
 import pandas as pd
-import yaml
 from mlflow.models import infer_signature
 from sklearn.metrics import accuracy_score, brier_score_loss, log_loss, roc_auc_score
 from sklearn.model_selection import StratifiedGroupKFold
 
 from youarebot.models import build_pipeline, numeric_columns, pair_constraint
-from youarebot.prepare import ID_COLS, PROCESSED_DIR, PROJECT_ROOT
+from youarebot.prepare import ID_COLS, PROCESSED_DIR
+from youarebot.utils import (  # noqa: F401  EXPERIMENT реэкспортируется для скриптов
+    EPS,
+    EXPERIMENT,
+    PROJECT_ROOT,
+    flatten,
+    git_commit,
+    git_dirty,
+    load_config,
+    set_seed,
+)
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-EPS = 1e-4
-EXPERIMENT = "you-are-bot"
-
-
-def load_config(path: Path) -> dict:
-    with open(path, encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
-
-def flatten(d: dict, prefix: str = "") -> dict:
-    out = {}
-    for k, v in d.items():
-        key = f"{prefix}{k}"
-        if isinstance(v, dict):
-            out.update(flatten(v, f"{key}."))
-        elif isinstance(v, list) and v and isinstance(v[0], dict):
-            for i, item in enumerate(v):
-                out.update(flatten(item, f"{key}.{i}."))
-        else:
-            out[key] = v
-    return out
-
-
-def set_seed(seed: int) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
-
-
-def git_commit() -> str:
-    try:
-        return subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=PROJECT_ROOT, text=True, stderr=subprocess.DEVNULL
-        ).strip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return "unknown"
-
-
-def git_dirty() -> bool:
-    try:
-        out = subprocess.check_output(
-            ["git", "status", "--porcelain", "."], cwd=PROJECT_ROOT, text=True
-        )
-        return bool(out.strip())
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return True
 
 
 def metrics(y: np.ndarray, p: np.ndarray, prefix: str) -> dict:
@@ -113,6 +72,17 @@ def feature_importance(pipe, path: Path) -> pd.DataFrame | None:
     return fi
 
 
+def add_transformer_preds(df: pd.DataFrame) -> pd.DataFrame:
+    """Добавляет OOF-предсказание трансформера для участника и его собеседника, если оно есть."""
+    from youarebot.transformer import PREDS_PATH
+
+    if not PREDS_PATH.exists():
+        return df
+    preds = pd.read_parquet(PREDS_PATH).set_index("ID")["bert_p"]
+    partner_id = df["dialog_id"] + "_" + (1 - df["participant_index"]).astype(str)
+    return df.assign(bert_p=df["ID"].map(preds).values, partner_bert_p=partner_id.map(preds).values)
+
+
 def train(config_path: Path, out_root: Path | None = None) -> dict:
     cfg = load_config(config_path)
     set_seed(cfg["seed"])
@@ -120,10 +90,11 @@ def train(config_path: Path, out_root: Path | None = None) -> dict:
     out_dir = (out_root or PROJECT_ROOT / "outputs") / run_name
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    train_df = pd.read_parquet(PROCESSED_DIR / "train.parquet")
-    test_df = pd.read_parquet(PROCESSED_DIR / "test.parquet")
+    train_df = add_transformer_preds(pd.read_parquet(PROCESSED_DIR / "train.parquet"))
+    test_df = add_transformer_preds(pd.read_parquet(PROCESSED_DIR / "test.parquet"))
     meta = json.loads((PROCESSED_DIR / "meta.json").read_text())
-    feat_df = train_df.drop(columns=ID_COLS + ["is_bot"])
+    # dialog_id остаётся во входе модели: по нему модель пары собирает диалог
+    feat_df = train_df.drop(columns=["ID", "is_bot"])
     columns = list(feat_df.columns)
     num_cols = numeric_columns(columns, cfg.get("features", {}))
     y = train_df["is_bot"].to_numpy()
