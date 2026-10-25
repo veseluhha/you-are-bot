@@ -54,6 +54,11 @@ def _text_stats(texts: list[str]) -> dict[str, float]:
         "starts_upper_share": sum(t[:1].isupper() for t in texts) / n,
         "ends_dot_share": sum(t.rstrip().endswith(".") for t in texts) / n,
         "empty_share": sum(not t.strip() for t in texts) / n,
+        # следы форматирования: у людей чаще пробел в конце, у ботов — переносы и двойные пробелы
+        "trail_ws_share": sum(t[-1:].isspace() for t in texts) / n,
+        "lead_ws_share": sum(t[:1].isspace() for t in texts) / n,
+        "has_newline_share": sum("\n" in t for t in texts) / n,
+        "double_space_share": sum("  " in t for t in texts) / n,
         "bot_words_rate": len(BOT_WORDS.findall(joined)) / n,
         # шаблонные боты повторяют одно и то же
         "unique_share": len(set(texts)) / n,
@@ -81,8 +86,18 @@ def _dialog_stats(turns: list[tuple], p: int) -> dict[str, float]:
     def mean(x):
         return float(np.mean(x)) if x else 0.0
 
+    # самая длинная серия своих сообщений подряд: участник 1 два раза подряд пишет почти
+    # только если он бот
+    max_run, run = 0, 0
+    for _, speaker, _ in turns:
+        run = run + 1 if speaker == p else 0
+        max_run = max(max_run, run)
+
     return {
         "is_first": float(turns[0][1] == p),
+        # последнее слово в диалоге почти всегда за ботом (~90% против ~25% у людей)
+        "is_last": float(turns[-1][1] == p),
+        "max_run": max_run,
         "dialog_len": len(turns),
         "own_turn_share": sum(t[1] == p for t in turns) / len(turns),
         "echo_sim_mean": mean(echo_sim),
