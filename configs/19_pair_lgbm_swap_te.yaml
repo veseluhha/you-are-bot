@@ -5,7 +5,9 @@ seed: 42
 cv: {n_splits: 5}
 model:
   name: message_te
-  smoothing: 2.0
+  # три варианта признака и слабое сглаживание — лучшие по перебору на модели 19
+  variants: [exact, template, knn]
+  smoothing: 1.0
   n_splits: 5
   inner:
     name: pair
