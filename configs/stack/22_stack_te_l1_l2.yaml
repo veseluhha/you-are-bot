@@ -1,0 +1,8 @@
+# 21 плюс target encoding реплик на втором уровне
+run_name: 22_stack_te_l1_l2
+seed: 42
+cv: {n_splits: 5}
+members: [19_pair_lgbm_swap_te, 18_lgbm_tfidf_handcrafted_te, 09_blend_logreg_lgbm_tfidf, 05_tfidf_handcrafted_logreg_pair]
+transformer: true
+message_te: true
+C: 1.0

@@ -1,0 +1,8 @@
+# стекинг 17 плюс target encoding реплик прямо на втором уровне
+run_name: 20_stack_te_l2
+seed: 42
+cv: {n_splits: 5}
+members: [11_pair_lgbm_swap, 09_blend_logreg_lgbm_tfidf, 05_tfidf_handcrafted_logreg_pair]
+transformer: true
+message_te: true
+C: 1.0

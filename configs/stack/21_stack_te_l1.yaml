@@ -1,0 +1,7 @@
+# стекинг на моделях первого уровня с target encoding реплик (18, 19) и прежних (09, 05)
+run_name: 21_stack_te_l1
+seed: 42
+cv: {n_splits: 5}
+members: [19_pair_lgbm_swap_te, 18_lgbm_tfidf_handcrafted_te, 09_blend_logreg_lgbm_tfidf, 05_tfidf_handcrafted_logreg_pair]
+transformer: true
+C: 1.0

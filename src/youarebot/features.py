@@ -110,4 +110,7 @@ def build_frame(df: pd.DataFrame, with_partner: bool = True) -> pd.DataFrame:
     out = handcrafted(df, with_partner=with_partner)
     out["own_text"] = [" \n ".join(t) for t in df["own_texts"]]
     out["partner_text"] = [" \n ".join(t) for t in df["partner_texts"]]
+    # реплики по отдельности (разделитель \x1e) — для target encoding реплик, см. message_te.py
+    out["own_msg_text"] = ["\x1e".join(t) for t in df["own_texts"]]
+    out["partner_msg_text"] = ["\x1e".join(t) for t in df["partner_texts"]]
     return out

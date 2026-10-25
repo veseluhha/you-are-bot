@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedGroupKFold
 
 from youarebot.data import data_hash
-from youarebot.prepare import RAW_DIR
+from youarebot.prepare import PROCESSED_DIR, RAW_DIR
 from youarebot.train import metrics
 from youarebot.utils import EPS, PROJECT_ROOT, flatten, git_commit, git_dirty, load_config
 
@@ -42,6 +42,44 @@ def _inputs(cfg: dict, out_root: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
     return train, test
 
 
+def _partner(ids: pd.Series, feats: np.ndarray) -> np.ndarray:
+    """Строки feats второго участника того же диалога (ID = <dialog_id>_<participant_index>)."""
+    dialog, idx = ids.str.rsplit("_", n=1).str[0], ids.str[-1].astype(int)
+    own = pd.DataFrame(feats, index=pd.MultiIndex.from_arrays([dialog, idx]))
+    return own.reindex(pd.MultiIndex.from_arrays([dialog, 1 - idx])).to_numpy()
+
+
+def _message_te(train: pd.DataFrame, test: pd.DataFrame, cfg: dict, cv) -> tuple:
+    """Target encoding реплик вторым уровнем: на трейне OOF по тем же фолдам, что и CV
+    стекинга (как и OOF моделей первого уровня), на тесте — словарь по всему трейну."""
+    from youarebot.message_te import encode, fit_counts, split_messages
+
+    msgs = {
+        split: split_messages(
+            pd.read_parquet(PROCESSED_DIR / f"{split}.parquet")
+            .set_index("ID")["own_msg_text"]
+            .reindex(df["ID"])
+        )
+        for split, df in (("train", train), ("test", test))
+    }
+    y = train["is_bot"].to_numpy()
+    prior, smoothing = float(y.mean()), cfg.get("message_te_smoothing", 2.0)
+    te_train = np.zeros((len(train), 4))
+    for tr, va in cv.split(train, y, train["dialog_id"]):
+        counts = fit_counts([msgs["train"][i] for i in tr], y[tr])
+        te_train[va] = encode([msgs["train"][i] for i in va], counts, prior, smoothing)
+    te_test = encode(msgs["test"], fit_counts(msgs["train"], y), prior, smoothing)
+
+    def to_x(te, ids):
+        partner = _partner(ids, te)
+        return np.column_stack([_logit(te[:, :3]), te[:, 3], _logit(partner[:, :3]), partner[:, 3]])
+
+    return to_x(te_train, train["ID"]), to_x(te_test, test["ID"])
+
+
+TE_NAMES = [f"{who}te_{k}" for who in ("", "partner_") for k in ("mean", "max", "min", "seen")]
+
+
 def run(config_path: Path, out_root: Path | None = None) -> dict:
     cfg = load_config(config_path)
     out_root = out_root or PROJECT_ROOT / "outputs"
@@ -51,6 +89,13 @@ def run(config_path: Path, out_root: Path | None = None) -> dict:
     cols = [c for c in train.columns if c not in ("ID", "dialog_id", "is_bot")]
     X, X_test = _logit(train[cols]), _logit(test[cols])
     y = train["is_bot"].to_numpy()
+    cv = StratifiedGroupKFold(
+        n_splits=cfg["cv"]["n_splits"], shuffle=True, random_state=cfg["seed"]
+    )
+    if cfg.get("message_te", False):
+        te_train, te_test = _message_te(train, test, cfg, cv)
+        X, X_test = np.column_stack([X, te_train]), np.column_stack([X_test, te_test])
+        cols = cols + TE_NAMES
 
     with mlflow.start_run(run_name=cfg["run_name"], nested=mlflow.active_run() is not None):
         mlflow.log_params(flatten(cfg))
@@ -63,17 +108,14 @@ def run(config_path: Path, out_root: Path | None = None) -> dict:
                 "config_file": config_path.name,
             }
         )
-        cv = StratifiedGroupKFold(
-            n_splits=cfg["cv"]["n_splits"], shuffle=True, random_state=cfg["seed"]
-        )
         oof = np.zeros(len(y))
         for tr, va in cv.split(X, y, train["dialog_id"]):
-            model = LogisticRegression(C=cfg["C"]).fit(X[tr], y[tr])
+            model = LogisticRegression(C=cfg["C"], max_iter=3000).fit(X[tr], y[tr])
             oof[va] = model.predict_proba(X[va])[:, 1]
         result = metrics(y, oof, "cv_")
         mlflow.log_metrics(result)
 
-        model = LogisticRegression(C=cfg["C"]).fit(X, y)
+        model = LogisticRegression(C=cfg["C"], max_iter=3000).fit(X, y)
         mlflow.log_params({f"coef.{c}": round(float(w), 4) for c, w in zip(cols, model.coef_[0])})
         p_test = np.clip(model.predict_proba(X_test)[:, 1], EPS, 1 - EPS)
         sub_path = out_dir / "submission.csv"

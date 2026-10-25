@@ -60,6 +60,11 @@ def build_pipeline(cfg: dict, columns: list[str]) -> Pipeline:
         from youarebot.pair import PairClassifier
 
         return Pipeline([("model", PairClassifier(model_cfg, seed))])
+    if name == "message_te":
+        from youarebot.message_te import MessageTEClassifier
+
+        # обёртка: добавляет target encoding реплик и обучает внутреннюю модель model.inner
+        return Pipeline([("model", MessageTEClassifier(model_cfg, cfg.get("features"), seed))])
 
     features_cfg = cfg["features"]
     num_cols = numeric_columns(columns, features_cfg)
