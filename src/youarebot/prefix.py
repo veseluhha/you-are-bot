@@ -16,11 +16,11 @@ import pandas as pd
 from sklearn.metrics import log_loss, roc_auc_score
 from sklearn.model_selection import StratifiedGroupKFold
 
-from youarebot.data import dialogs_to_participants, load_dialogs
+from youarebot.data import data_hash, dialogs_to_participants, load_dialogs
 from youarebot.features import build_frame
 from youarebot.models import build_pipeline, pair_constraint
 from youarebot.prepare import PROJECT_ROOT, RAW_DIR
-from youarebot.utils import EPS, flatten, git_commit, load_config
+from youarebot.utils import EPS, flatten, git_commit, git_dirty, load_config
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -60,7 +60,14 @@ def run(config_path: Path, eval_ks: list[int], train_ks: list[int]) -> dict:
     with mlflow.start_run(run_name="prefix_online", nested=mlflow.active_run() is not None):
         mlflow.log_params(flatten(cfg))
         mlflow.log_params({"prefix.eval_ks": str(eval_ks), "prefix.train_ks": str(train_ks)})
-        mlflow.set_tags({"git_commit": git_commit(), "config_file": config_path.name})
+        mlflow.set_tags(
+            {
+                "git_commit": git_commit(),
+                "git_dirty": str(git_dirty()),
+                "data_md5": data_hash(RAW_DIR),
+                "config_file": config_path.name,
+            }
+        )
         for tr, va in cv.split(full, y_full, full["dialog_id"]):
             tr_d = set(full["dialog_id"].iloc[tr])
             for mode in ("full", "prefix"):

@@ -17,7 +17,7 @@ import pandas as pd
 from sklearn.metrics import log_loss, roc_auc_score
 from sklearn.model_selection import StratifiedGroupKFold
 
-from youarebot.data import load_split
+from youarebot.data import data_hash, load_split
 from youarebot.prepare import PROCESSED_DIR, RAW_DIR
 from youarebot.utils import (
     EPS,
@@ -25,6 +25,7 @@ from youarebot.utils import (
     PARENT_RUN_ENV,
     flatten,
     git_commit,
+    git_dirty,
     load_config,
     torch_device,
 )
@@ -121,6 +122,8 @@ def run(config_path: Path) -> dict:
         mlflow.set_tags(
             {
                 "git_commit": git_commit(),
+                "git_dirty": str(git_dirty()),
+                "data_md5": data_hash(RAW_DIR),
                 "model_name": cfg["model_name"],
                 "config_file": config_path.name,
                 "device": str(device),

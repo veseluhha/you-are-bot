@@ -15,8 +15,10 @@ from scipy.special import logit
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedGroupKFold
 
+from youarebot.data import data_hash
+from youarebot.prepare import RAW_DIR
 from youarebot.train import metrics
-from youarebot.utils import EPS, PROJECT_ROOT, flatten, git_commit, load_config
+from youarebot.utils import EPS, PROJECT_ROOT, flatten, git_commit, git_dirty, load_config
 
 
 def _logit(p) -> np.ndarray:
@@ -55,6 +57,8 @@ def run(config_path: Path, out_root: Path | None = None) -> dict:
         mlflow.set_tags(
             {
                 "git_commit": git_commit(),
+                "git_dirty": str(git_dirty()),
+                "data_md5": data_hash(RAW_DIR),
                 "model_name": "stack_logreg",
                 "config_file": config_path.name,
             }
