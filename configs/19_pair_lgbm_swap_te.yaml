@@ -1,4 +1,5 @@
-# то же, что 11, плюс target encoding реплик обоих участников
+# то же, что 11, плюс target encoding реплик обоих участников;
+# бустинг короче (lr 0.02 x 600) и усреднён по 5 сидам — длинный переобучается, см. README
 run_name: 19_pair_lgbm_swap_te
 seed: 42
 cv: {n_splits: 5}
@@ -16,5 +17,6 @@ model:
       own_text_b_tfidf: {analyzer: char_wb, ngram_range: [2, 4], min_df: 5, max_features: 20000, sublinear_tf: true}
     model:
       name: lgbm
-      params: {n_estimators: 500, learning_rate: 0.03, num_leaves: 15, min_child_samples: 20, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.5, reg_lambda: 1.0}
+      seeds: 5
+      params: {n_estimators: 600, learning_rate: 0.02, num_leaves: 15, min_child_samples: 40, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.5, reg_lambda: 1.0}
 postprocess: {pair_constraint: false}

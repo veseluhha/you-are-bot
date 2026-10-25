@@ -51,8 +51,9 @@ def _partner(ids: pd.Series, feats: np.ndarray) -> np.ndarray:
 
 def _message_te(train: pd.DataFrame, test: pd.DataFrame, cfg: dict, cv) -> tuple:
     """Target encoding реплик вторым уровнем: на трейне OOF по тем же фолдам, что и CV
-    стекинга (как и OOF моделей первого уровня), на тесте — словарь по всему трейну."""
-    from youarebot.message_te import encode, fit_counts, split_messages
+    стекинга (как и OOF моделей первого уровня), на тесте — словарь по всему трейну.
+    message_knn: true добавляет нечёткий вариант (похожие, а не только такие же реплики)."""
+    from youarebot.message_te import encode, fit_counts, knn_encode, split_messages
 
     msgs = {
         split: split_messages(
@@ -64,20 +65,36 @@ def _message_te(train: pd.DataFrame, test: pd.DataFrame, cfg: dict, cv) -> tuple
     }
     y = train["is_bot"].to_numpy()
     prior, smoothing = float(y.mean()), cfg.get("message_te_smoothing", 2.0)
-    te_train = np.zeros((len(train), 4))
+    use_knn = cfg.get("message_knn", False)
+
+    def features(fit_idx, apply_msgs):
+        fit_msgs = [msgs["train"][i] for i in fit_idx]
+        te = encode(apply_msgs, fit_counts(fit_msgs, y[fit_idx]), prior, smoothing)
+        if use_knn:
+            te = np.column_stack(
+                [te, knn_encode(fit_msgs, y[fit_idx], apply_msgs, prior, smoothing)]
+            )
+        return te
+
+    width = 7 if use_knn else 4
+    te_train = np.zeros((len(train), width))
     for tr, va in cv.split(train, y, train["dialog_id"]):
-        counts = fit_counts([msgs["train"][i] for i in tr], y[tr])
-        te_train[va] = encode([msgs["train"][i] for i in va], counts, prior, smoothing)
-    te_test = encode(msgs["test"], fit_counts(msgs["train"], y), prior, smoothing)
+        te_train[va] = features(tr, [msgs["train"][i] for i in va])
+    te_test = features(np.arange(len(train)), msgs["test"])
 
     def to_x(te, ids):
+        # вероятности — в логиты, доли совпавших реплик — как есть; то же для собеседника
+        prob = [0, 1, 2] + ([4, 5] if use_knn else [])
+        share = [3] + ([6] if use_knn else [])
         partner = _partner(ids, te)
-        return np.column_stack([_logit(te[:, :3]), te[:, 3], _logit(partner[:, :3]), partner[:, 3]])
+        return np.column_stack(
+            [_logit(te[:, prob]), te[:, share], _logit(partner[:, prob]), partner[:, share]]
+        )
 
-    return to_x(te_train, train["ID"]), to_x(te_test, test["ID"])
-
-
-TE_NAMES = [f"{who}te_{k}" for who in ("", "partner_") for k in ("mean", "max", "min", "seen")]
+    names = ["te_mean", "te_max", "te_min"] + (["knn_mean", "knn_max"] if use_knn else [])
+    names += ["te_seen"] + (["knn_near"] if use_knn else [])
+    names += [f"partner_{n}" for n in names]
+    return to_x(te_train, train["ID"]), to_x(te_test, test["ID"]), names
 
 
 def run(config_path: Path, out_root: Path | None = None) -> dict:
@@ -93,9 +110,9 @@ def run(config_path: Path, out_root: Path | None = None) -> dict:
         n_splits=cfg["cv"]["n_splits"], shuffle=True, random_state=cfg["seed"]
     )
     if cfg.get("message_te", False):
-        te_train, te_test = _message_te(train, test, cfg, cv)
+        te_train, te_test, te_names = _message_te(train, test, cfg, cv)
         X, X_test = np.column_stack([X, te_train]), np.column_stack([X_test, te_test])
-        cols = cols + TE_NAMES
+        cols = cols + te_names
 
     with mlflow.start_run(run_name=cfg["run_name"], nested=mlflow.active_run() is not None):
         mlflow.log_params(flatten(cfg))

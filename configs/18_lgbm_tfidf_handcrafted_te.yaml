@@ -1,4 +1,5 @@
-# то же, что 07, плюс target encoding реплик: доля ботов среди авторов таких же реплик в трейне
+# то же, что 07, плюс target encoding реплик: доля ботов среди авторов таких же реплик в трейне;
+# 300 деревьев вместо 500 и усреднение по 5 сидам
 run_name: 18_lgbm_tfidf_handcrafted_te
 seed: 42
 cv: {n_splits: 5}
@@ -12,5 +13,6 @@ model:
   n_splits: 5
   inner:
     name: lgbm
-    params: {n_estimators: 500, learning_rate: 0.03, num_leaves: 15, min_child_samples: 20, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.5, reg_lambda: 1.0}
+    seeds: 5
+    params: {n_estimators: 300, learning_rate: 0.03, num_leaves: 15, min_child_samples: 10, subsample: 0.8, subsample_freq: 1, colsample_bytree: 0.5, reg_lambda: 1.0}
 postprocess: {pair_constraint: true}

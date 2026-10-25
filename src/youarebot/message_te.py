@@ -54,6 +54,41 @@ def encode(msgs: list[list[str]], counts: tuple[dict, dict], prior: float, smoot
     return out
 
 
+def knn_encode(
+    fit_msgs: list[list[str]],
+    y: np.ndarray,
+    msgs: list[list[str]],
+    prior: float,
+    smoothing: float,
+    k: int = 10,
+    min_sim: float = 0.5,
+) -> np.ndarray:
+    """Нечёткий вариант: доля ботов среди авторов k похожих реплик трейна (косинус по
+    символьным n-граммам не ниже min_sim). Ловит вариации шаблонов, а не только повторы.
+    Колонки: среднее и максимум по репликам участника, доля реплик с почти точным совпадением.
+    """
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.neighbors import NearestNeighbors
+
+    pairs = [(t, label) for texts, label in zip(fit_msgs, y) for t in set(texts)]
+    vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 4), min_df=2, sublinear_tf=True)
+    labels = np.array([label for _, label in pairs])
+    nn = NearestNeighbors(n_neighbors=k, metric="cosine").fit(
+        vec.fit_transform([t for t, _ in pairs])
+    )
+    out = np.zeros((len(msgs), 3))
+    out[:, :2] = prior
+    for i, texts in enumerate(msgs):
+        if not texts:
+            continue
+        dist, idx = nn.kneighbors(vec.transform(texts))
+        sim = 1 - dist
+        w = np.where(sim >= min_sim, sim, 0.0)
+        rates = ((w * labels[idx]).sum(1) + smoothing * prior) / (w.sum(1) + smoothing)
+        out[i] = rates.mean(), rates.max(), (sim[:, 0] >= 0.9).mean()
+    return out
+
+
 class MessageTEClassifier(ClassifierMixin, BaseEstimator):
     def __init__(self, cfg: dict, features: dict | None = None, seed: int = 42):
         self.cfg = cfg

@@ -84,7 +84,15 @@ def build_pipeline(cfg: dict, columns: list[str]) -> Pipeline:
     if name == "logreg":
         model = LogisticRegression(random_state=seed, **params)
     elif name == "lgbm":
+        n_seeds = model_cfg.get("seeds", 1)
         model = LGBMClassifier(random_state=seed, verbose=-1, **params)
+        if n_seeds > 1:
+            # усреднение бустингов с разными сидами (subsample/colsample) — меньше разброс
+            seeds = [
+                (f"s{i}", LGBMClassifier(random_state=seed + i, verbose=-1, **params))
+                for i in range(n_seeds)
+            ]
+            model = VotingClassifier(seeds, voting="soft")
     else:
         raise ValueError(f"неизвестная модель: {name}")
     return Pipeline([("prep", prep), ("model", model)])
