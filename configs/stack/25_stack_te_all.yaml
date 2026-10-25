@@ -1,0 +1,9 @@
+# 23 плюс линейная модель с target encoding реплик (24)
+run_name: 25_stack_te_all
+seed: 42
+cv: {n_splits: 5}
+members: [19_pair_lgbm_swap_te, 18_lgbm_tfidf_handcrafted_te, 24_tfidf_handcrafted_logreg_te, 09_blend_logreg_lgbm_tfidf, 05_tfidf_handcrafted_logreg_pair]
+transformer: true
+message_te: true
+message_knn: true
+C: 0.3
