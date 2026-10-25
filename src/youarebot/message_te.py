@@ -27,8 +27,15 @@ def normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip().lower())
 
 
-def split_messages(col: pd.Series) -> list[list[str]]:
-    return [[normalize(t) for t in s.split(SEP)] if s else [] for s in col]
+def template(text: str) -> str:
+    """Грубее, чем normalize: без пунктуации, цифры -> 0, «saman saman saman» -> «saman *»."""
+    t = re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", re.sub(r"\d+", "0", text.lower()))).strip()
+    words = t.split()
+    return f"{words[0]} *" if len(words) > 1 and len(set(words)) == 1 else t
+
+
+def split_messages(col: pd.Series, norm=normalize) -> list[list[str]]:
+    return [[norm(t) for t in s.split(SEP)] if s else [] for s in col]
 
 
 def fit_counts(msgs: list[list[str]], y: np.ndarray) -> tuple[dict, dict]:
@@ -89,14 +96,45 @@ def knn_encode(
     return out
 
 
+def variant_columns(variants: list[str]) -> list[str]:
+    cols = []
+    for v in variants:
+        if v == "exact":
+            cols += TE_COLS
+        elif v == "template":
+            cols += [c.replace("te_", "te_tpl_") for c in TE_COLS]
+        elif v == "knn":
+            cols += ["knn_mean", "knn_max", "knn_near"]
+        else:
+            raise ValueError(f"неизвестный вариант target encoding: {v}")
+    return cols
+
+
+def encode_variants(variants, fit: dict, y: np.ndarray, apply: dict, prior, smoothing):
+    """fit/apply — реплики в двух нормализациях: {"exact": [...], "template": [...]}."""
+    blocks = []
+    for v in variants:
+        if v == "knn":
+            blocks.append(knn_encode(fit["exact"], y, apply["exact"], prior, smoothing))
+        else:
+            blocks.append(encode(apply[v], fit_counts(fit[v], y), prior, smoothing))
+    return np.column_stack(blocks)
+
+
 class MessageTEClassifier(ClassifierMixin, BaseEstimator):
     def __init__(self, cfg: dict, features: dict | None = None, seed: int = 42):
         self.cfg = cfg
         self.features = features
         self.seed = seed
 
+    def _messages(self, X: pd.DataFrame) -> dict:
+        return {
+            "exact": split_messages(X["own_msg_text"]),
+            "template": split_messages(X["own_msg_text"], template),
+        }
+
     def _augment(self, X: pd.DataFrame, te: np.ndarray) -> pd.DataFrame:
-        own = pd.DataFrame(te, columns=TE_COLS, index=X.index)
+        own = pd.DataFrame(te, columns=self.columns_, index=X.index)
         # признаки собеседника — строка второго участника того же диалога
         key = pd.MultiIndex.from_arrays([X[KEY_COL], X["participant_index"]])
         partner_key = pd.MultiIndex.from_arrays([X[KEY_COL], 1 - X["participant_index"]])
@@ -106,17 +144,23 @@ class MessageTEClassifier(ClassifierMixin, BaseEstimator):
 
     def fit(self, X: pd.DataFrame, y):
         y = np.asarray(y)
-        msgs = split_messages(X["own_msg_text"])
+        msgs = self._messages(X)
         smoothing = self.cfg.get("smoothing", 2.0)
+        variants = self.cfg.get("variants", ["exact"])
         self.prior_ = float(y.mean())
-        te = np.zeros((len(X), len(TE_COLS)))
+        self.columns_ = variant_columns(variants)
+        te = np.zeros((len(X), len(self.columns_)))
         inner = StratifiedGroupKFold(
             n_splits=self.cfg.get("n_splits", 5), shuffle=True, random_state=self.seed
         )
+
+        def take(idx):
+            return {k: [m[i] for i in idx] for k, m in msgs.items()}
+
         for tr, va in inner.split(X, y, X[KEY_COL]):
-            counts = fit_counts([msgs[i] for i in tr], y[tr])
-            te[va] = encode([msgs[i] for i in va], counts, self.prior_, smoothing)
-        self.counts_ = fit_counts(msgs, y)
+            te[va] = encode_variants(variants, take(tr), y[tr], take(va), self.prior_, smoothing)
+        # для валидации и теста словари строятся заново по всему трейну фолда
+        self.fit_msgs_, self.fit_y_ = msgs, y
 
         Xa = self._augment(X, te)
         inner_cfg = {"seed": self.seed, "features": self.features or {}, "model": self.cfg["inner"]}
@@ -126,8 +170,14 @@ class MessageTEClassifier(ClassifierMixin, BaseEstimator):
         return self
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
-        msgs = split_messages(X["own_msg_text"])
-        te = encode(msgs, self.counts_, self.prior_, self.cfg.get("smoothing", 2.0))
+        te = encode_variants(
+            self.cfg.get("variants", ["exact"]),
+            self.fit_msgs_,
+            self.fit_y_,
+            self._messages(X),
+            self.prior_,
+            self.cfg.get("smoothing", 2.0),
+        )
         return self.pipe_.predict_proba(self._augment(X, te))
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
