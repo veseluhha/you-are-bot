@@ -1,0 +1,17 @@
+<section id="eda-pairs" data-transition="fade" style="background:#F7F6F2;color:#14213D;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B5541F;letter-spacing:2px">EDA · СТРУКТУРА ПАР</p>
+<h2 style="font-size:72px;font-weight:600;line-height:1.1">В диалоге никогда не бывает двух ботов</h2>
+</div>
+<div style="display:flex;gap:56px;align-items:center">
+<img src="project/ds/figures/01_balance.png" alt="Три графика: баланс классов, число ботов в диалоге, доля ботов по participant_index" style="width:1100px;height:321px;object-fit:contain;background:#FFFFFF;border-radius:12px">
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:32px;line-height:1.35"><b>41%</b> участников — боты</p>
+<p style="font-size:32px;line-height:1.35"><b>1 237</b> диалогов с одним ботом, <b>279</b> — два человека, <b>0</b> — два бота</p>
+<p style="font-size:32px;line-height:1.35">Участник 0 всегда пишет первым и он бот в <b>50%</b> случаев, участник 1 — в <b>32%</b></p>
+</div>
+</div>
+<p style="font-size:32px;color:#4A5568;line-height:1.4">Вывод: участников одного диалога нельзя предсказывать независимо — признаки собеседника информативны, а вероятности пары стоит согласовать.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7179">reports/figures/01_balance.png · 3</p>
+<aside>Главное наблюдение EDA. Ограничение «не больше одного бота» дальше превращается в пост-обработку вероятностей. И кросс-валидация должна группировать по dialog_id.</aside>
+</section>

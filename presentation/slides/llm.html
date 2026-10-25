@@ -1,0 +1,21 @@
+<section id="llm" data-transition="fade" style="background:#F7F6F2;color:#14213D;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B5541F;letter-spacing:2px">ПОДХОД 3 · ПЕРПЛЕКСИЯ LLM (BINOCULARS)</p>
+<h2 style="font-size:72px;font-weight:600;line-height:1.1">Детектор LLM-текста здесь почти не помогает</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;border:1px solid #E1DFD8;border-radius:16px;padding:40px">
+<h3 style="font-size:34px;font-weight:600">Что считали</h3>
+<p style="font-size:28px;color:#4A5568;line-height:1.4">Для каждой реплики: NLL под Qwen2.5-0.5B и кросс-перплексия с Qwen2.5-0.5B-Instruct. Binoculars = их отношение, у машинного текста ниже</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#4A5568">«Конечно! Вот несколько…» → 0.91<br>«ахах ну ты даешь)» → 1.21</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;border:1px solid #E1DFD8;border-radius:16px;padding:40px">
+<h3 style="font-size:34px;font-weight:600">Что получили</h3>
+<p style="font-size:28px;color:#4A5568;line-height:1.4">ROC-AUC отдельных признаков 0.58–0.64, на длинных репликах без эха — 0.60–0.67</p>
+<p style="font-size:28px;color:#4A5568;line-height:1.4">Модель пары: 0.166 → <b style="color:#14213D">0.167</b> (12), бустинг: 0.172 → <b style="color:#14213D">0.177</b> (13)</p>
+</div>
+</div>
+<p style="font-size:32px;color:#4A5568;line-height:1.4">Почему: боты в данных — в основном эхо и шаблоны, а не LLM; реплики короткие; 0.5B-модель слабо знает русский.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7179">src/youarebot/llm_features.py · считается на GPU, кэш по md5 реплики · 10</p>
+<aside>Отрицательный результат, но он полезен: он говорит, что в этом датасете бота выдаёт поведение в диалоге, а не стиль генерации. Для датасета с LLM-ботами признак стоит перепроверить с более сильной русскоязычной моделью.</aside>
+</section>

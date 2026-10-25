@@ -1,0 +1,16 @@
+<section id="eda-features" data-transition="fade" style="background:#F7F6F2;color:#14213D;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#B5541F;letter-spacing:2px">EDA · ПРИЗНАКИ</p>
+<h2 style="font-size:72px;font-weight:600;line-height:1.1">Бота выдаёт поведение в диалоге, а не словарь</h2>
+</div>
+<div style="display:flex;gap:64px;align-items:center">
+<img src="project/ds/figures/07_feature_effect.png" alt="Разница средних значений признаков бот минус человек в стандартных отклонениях: сильнее всего own_turn_share, echo_contains_share, echo_sim_mean" style="width:600px;height:600px;object-fit:contain;background:#FFFFFF;border-radius:12px">
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:32px;line-height:1.35"><b>Ботов выше:</b> доля своих ходов, эхо собеседника, длина ответа относительно реплики собеседника, точка в конце</p>
+<p style="font-size:32px;line-height:1.35"><b>Людей выше:</b> заглавная буква в начале, капс, латиница, восклицательные знаки</p>
+<p style="font-size:32px;line-height:1.35;color:#4A5568">TF-IDF только по текстам даёт logloss 0.495, ручные признаки поведения — 0.301</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7179">Эффект = (среднее у ботов − среднее у людей) / std · reports/figures/07_feature_effect.png · 5</p>
+<aside>Это мотивирует ручные признаки: эхо, самоповтор, доля ходов, соотношение длин. Лексика слабее, потому что боты пишут на тех же темах, что и люди.</aside>
+</section>
