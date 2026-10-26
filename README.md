@@ -5,8 +5,9 @@
 
 ## Запуск
 
-Сырые файлы соревнования (`train.json`, `ytrain.csv`, `test.json`, `ytest.csv`,
-`sample_submission.csv`) лежат в `data/raw/`. Весь эксперимент запускается одной командой:
+Данных в репозитории нет. Скачайте `train.json`, `ytrain.csv`, `test.json`, `ytest.csv` и
+`sample_submission.csv` на вкладке «Данные» соревнования и положите в `data/raw/`. Весь
+эксперимент запускается одной командой:
 
 ```bash
 ./run.sh
