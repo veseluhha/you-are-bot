@@ -96,7 +96,7 @@ def main() -> None:
     hist_by_class(train, "cyr_share", "Доля реплик с кириллицей", "05_cyrillic.png", bins=10)
     hist_by_class(train, "self_sim_mean", "Сходство своих соседних реплик", "06_self_sim.png")
 
-    # 7. средние значения признаков по классам — какие отличаются сильнее всего
+    # 7. средние значения признаков по классам: какие отличаются сильнее всего
     num = train.drop(columns=["ID", "dialog_id", "own_text", "partner_text"])
     num = num.loc[:, ~num.columns.str.startswith("partner_")]
     means = num.groupby("is_bot").mean().T

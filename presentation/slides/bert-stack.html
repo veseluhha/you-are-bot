@@ -7,8 +7,8 @@
 <div style="flex:1;display:flex;flex-direction:column;gap:24px">
 <p style="font-size:30px;line-height:1.4">rubert-tiny2 читает весь диалог от лица участника: «Я: …» / «Собеседник: …», 5 фолдов → OOF</p>
 <p style="font-size:30px;line-height:1.4">Сам по себе <b>0.386</b> (AUC 0.91), корреляция с моделью пары 0.78</p>
-<p style="font-size:30px;line-height:1.4">Признаком в бустинг — <b>хуже</b>: 0.154 → 0.166. Деревья переобучаются на шумный OOF</p>
-<p style="font-size:30px;line-height:1.4">Логрег на логитах OOF разных моделей — <b style="color:#B5541F">лучший результат</b></p>
+<p style="font-size:30px;line-height:1.4">Признаком в бустинг <b>хуже</b>: 0.154 → 0.166. Деревья переобучаются на шумный OOF</p>
+<p style="font-size:30px;line-height:1.4">Логрег на логитах OOF разных моделей даёт <b style="color:#B5541F">лучший результат</b></p>
 </div>
 <table style="width:640px;font-size:28px;color:#14213D">
 <tr><th style="width:70%;text-align:left">Второй уровень</th><th style="width:30%;text-align:right">logloss</th></tr>
@@ -18,6 +18,6 @@
 <tr style="background:#FBE9DC"><td><b>17 логрег: пара + бленд + логрег + rubert</b></td><td style="text-align:right"><b>0.147</b></td></tr>
 </table>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7179">src/youarebot/transformer.py · stack.py · fine-tune на H100 — 0.7 мин · 11</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7179">src/youarebot/transformer.py · stack.py · fine-tune на H100: 0.7 мин · 11</p>
 <aside>Стекинг 17 объединяет разнородные модели: совместную модель пары, бленд логрега и бустинга, логрег на TF-IDF и rubert. Каждая получает один коэффициент на логите, поэтому второй уровень не переобучается. Фолды второго уровня те же, что и у первого. После target encoding реплик (подход 5) rubert почти ничего не добавляет: в стекинге 21 его вес 0.008.</aside>
 </section>

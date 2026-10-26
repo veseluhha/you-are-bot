@@ -9,7 +9,7 @@ features:
   own_text_tfidf: {analyzer: char_wb, ngram_range: [2, 4], min_df: 5, max_features: 20000, sublinear_tf: true}
 model:
   name: message_te
-  # три варианта признака и слабое сглаживание — лучшие по перебору на модели 19
+  # три варианта признака и слабое сглаживание: лучшие по перебору на модели 19
   variants: [exact, template, knn]
   smoothing: 1.0
   n_splits: 5

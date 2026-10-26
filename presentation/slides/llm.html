@@ -11,11 +11,11 @@
 </div>
 <div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FFFFFF;border:1px solid #E1DFD8;border-radius:16px;padding:40px">
 <h3 style="font-size:34px;font-weight:600">Что получили</h3>
-<p style="font-size:28px;color:#4A5568;line-height:1.4">ROC-AUC отдельных признаков 0.58–0.64, на длинных репликах без эха — 0.60–0.67</p>
+<p style="font-size:28px;color:#4A5568;line-height:1.4">ROC-AUC отдельных признаков 0.58–0.64, на длинных репликах без эха 0.60–0.67</p>
 <p style="font-size:28px;color:#4A5568;line-height:1.4">Модель пары: 0.154 → <b style="color:#14213D">0.156</b> (12), бустинг: 0.162 → <b style="color:#14213D">0.164</b> (13)</p>
 </div>
 </div>
-<p style="font-size:32px;color:#4A5568;line-height:1.4">Почему: боты в данных — в основном эхо и шаблоны, а не LLM; реплики короткие; 0.5B-модель слабо знает русский.</p>
+<p style="font-size:32px;color:#4A5568;line-height:1.4">Почему: боты в данных в основном эхо и шаблоны, а не LLM; реплики короткие; 0.5B-модель слабо знает русский.</p>
 <p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6A7179">src/youarebot/llm_features.py · считается на GPU, кэш по md5 реплики · 10</p>
 <aside>Отрицательный результат, но он полезен: он говорит, что в этом датасете бота выдаёт поведение в диалоге, а не стиль генерации. Для датасета с LLM-ботами признак стоит перепроверить с более сильной русскоязычной моделью.</aside>
 </section>

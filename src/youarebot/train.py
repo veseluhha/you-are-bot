@@ -170,7 +170,7 @@ def train(config_path: Path, out_root: Path | None = None) -> dict:
         mlflow.sklearn.log_model(
             pipe,
             name="model",
-            # skops по умолчанию не доверяет типам lightgbm, модели свои — берём cloudpickle
+            # skops по умолчанию не доверяет типам lightgbm, модели свои, берём cloudpickle
             serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE,
             input_example=example,
             # сервис ждёт вероятности, а не метки: pyfunc-модель отдаёт predict_proba

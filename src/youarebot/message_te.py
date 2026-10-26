@@ -6,7 +6,7 @@
 доля реплик, которые встречались. То же для собеседника.
 
 Обёртка обучает признак внутри фолда: для своих обучающих строк он считается по внутренним
-фолдам (иначе строка видит собственную метку), для валидации и теста — по всему трейну фолда.
+фолдам (иначе строка видит собственную метку), для валидации и теста по всему трейну фолда.
 """
 
 import collections
@@ -71,7 +71,7 @@ def knn_encode(
     min_sim: float = 0.5,
 ) -> np.ndarray:
     """Нечёткий вариант: доля ботов среди авторов k похожих реплик трейна (косинус по
-    символьным n-граммам не ниже min_sim). Ловит вариации шаблонов, а не только повторы.
+    символьным n-граммам не ниже min_sim). Ловит и вариации шаблонов, и повторы.
     Колонки: среднее и максимум по репликам участника, доля реплик с почти точным совпадением.
     """
     from sklearn.feature_extraction.text import TfidfVectorizer
@@ -111,7 +111,7 @@ def variant_columns(variants: list[str]) -> list[str]:
 
 
 def encode_variants(variants, fit: dict, y: np.ndarray, apply: dict, prior, smoothing):
-    """fit/apply — реплики в двух нормализациях: {"exact": [...], "template": [...]}."""
+    """fit/apply: реплики в двух нормализациях: {"exact": [...], "template": [...]}."""
     blocks = []
     for v in variants:
         if v == "knn":
@@ -135,7 +135,7 @@ class MessageTEClassifier(ClassifierMixin, BaseEstimator):
 
     def _augment(self, X: pd.DataFrame, te: np.ndarray) -> pd.DataFrame:
         own = pd.DataFrame(te, columns=self.columns_, index=X.index)
-        # признаки собеседника — строка второго участника того же диалога
+        # признаки собеседника берём из строки второго участника того же диалога
         key = pd.MultiIndex.from_arrays([X[KEY_COL], X["participant_index"]])
         partner_key = pd.MultiIndex.from_arrays([X[KEY_COL], 1 - X["participant_index"]])
         partner = own.set_axis(key).reindex(partner_key).fillna(self.prior_)

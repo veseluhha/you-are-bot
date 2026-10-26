@@ -24,7 +24,7 @@ def prepare(raw_dir: Path = RAW_DIR, out_dir: Path = PROCESSED_DIR, llm: bool = 
         from youarebot import llm_features
 
         cache = out_dir / "llm_cache.parquet"
-        # torch — в отдельном процессе, иначе конфликт libomp с lightgbm (см. utils.py)
+        # torch в отдельном процессе, иначе конфликт libomp с lightgbm (см. utils.py)
         subprocess.run(
             [sys.executable, "-m", "youarebot.llm_features", str(raw_dir), str(cache)], check=True
         )
@@ -32,7 +32,7 @@ def prepare(raw_dir: Path = RAW_DIR, out_dir: Path = PROCESSED_DIR, llm: bool = 
         meta["llm_observer"] = llm_features.OBSERVER
         meta["llm_performer"] = llm_features.PERFORMER
     for split, df in splits.items():
-        # признаки собеседника считаем всегда, а использовать ли их — решает конфиг обучения
+        # признаки собеседника считаем всегда, а использовать ли их, решает конфиг обучения
         frame = build_frame(df, with_partner=True)
         if llm:
             own = llm_features.participant_features(df["own_texts"], scores)

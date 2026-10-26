@@ -29,7 +29,7 @@ def numeric_columns(columns: list[str], features_cfg: dict) -> list[str]:
         # признаки перплексии LLM включаются явно, чтобы старые конфиги не меняли смысл
         cols = [c for c in cols if "llm_" not in c]
     if not features_cfg.get("transformer", False):
-        # OOF-предсказание дообученного трансформера — признак второго уровня (стекинг)
+        # OOF-предсказание дообученного трансформера: признак второго уровня (стекинг)
         cols = [c for c in cols if "bert_p" not in c]
     return cols
 
@@ -70,7 +70,7 @@ def build_pipeline(cfg: dict, columns: list[str]) -> Pipeline:
     num_cols = numeric_columns(columns, features_cfg)
     transformers = []
     if num_cols:
-        # линейной модели нужны отмасштабированные признаки, бустингу — нет
+        # линейной модели нужны отмасштабированные признаки, бустингу нет
         scaler = StandardScaler() if name == "logreg" else "passthrough"
         transformers.append(("num", scaler, num_cols))
     for col in filter(is_text, columns):
@@ -87,7 +87,7 @@ def build_pipeline(cfg: dict, columns: list[str]) -> Pipeline:
         n_seeds = model_cfg.get("seeds", 1)
         model = LGBMClassifier(random_state=seed, verbose=-1, **params)
         if n_seeds > 1:
-            # усреднение бустингов с разными сидами (subsample/colsample) — меньше разброс
+            # усреднение бустингов с разными сидами (subsample/colsample), меньше разброс
             seeds = [
                 (f"s{i}", LGBMClassifier(random_state=seed + i, verbose=-1, **params))
                 for i in range(n_seeds)
@@ -102,7 +102,7 @@ def pair_constraint(proba: np.ndarray, dialog_ids: pd.Series) -> np.ndarray:
     """Пересчёт вероятностей с учётом того, что в диалоге не больше одного бота.
 
     Предсказания участников считаем независимыми и оставляем три допустимых исхода:
-    ботов нет, бот — участник 0, бот — участник 1. Маргинал участника после нормировки —
+    ботов нет, бот участник 0, бот участник 1. Маргинал участника после нормировки:
     p_i * (1 - p_j) / Z. Если в диалоге один размеченный участник, вероятность не меняется.
     """
     out = proba.copy()

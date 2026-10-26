@@ -31,7 +31,7 @@ packages = ["src/youarebot"]
 line-length = 100
 
 # На Linux torch берётся из индекса PyTorch под CUDA 12.6 (драйвер на GPU-сервере),
-# на macOS — обычное колесо с PyPI (MPS). Версия одна и та же: 2.14.1.
+# на macOS обычное колесо с PyPI (MPS). Версия одна и та же: 2.14.1.
 [tool.uv.sources]
 torch = [{ index = "pytorch-cu126", marker = "sys_platform == 'linux'" }]
 

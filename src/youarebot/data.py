@@ -1,4 +1,4 @@
-"""Загрузка сырых диалогов и разворот в таблицу «один участник — одна строка»."""
+"""Загрузка сырых диалогов и разворот в таблицу «один участник = одна строка»."""
 
 import hashlib
 import json
@@ -10,7 +10,7 @@ RAW_FILES = ["train.json", "ytrain.csv", "test.json", "ytest.csv"]
 
 
 def data_hash(raw_dir: Path) -> str:
-    """md5 по всем сырым файлам — чтобы в MLflow было видно, на каких данных обучались."""
+    """md5 по всем сырым файлам, чтобы в MLflow было видно, на каких данных обучались."""
     h = hashlib.md5()
     for name in RAW_FILES:
         h.update((raw_dir / name).read_bytes())
@@ -33,7 +33,7 @@ def dialogs_to_participants(dialogs: dict[str, list[dict]]) -> pd.DataFrame:
                 {
                     "dialog_id": did,
                     "participant_index": p,
-                    # (номер реплики, кто говорит, текст) — полный диалог нужен для эхо-признаков
+                    # (номер реплики, кто говорит, текст): полный диалог нужен для эхо-признаков
                     "turns": [(m["message"], m["participant_index"], m["text"]) for m in msgs],
                     "own_texts": [m["text"] for m in msgs if m["participant_index"] == p],
                     "partner_texts": [m["text"] for m in msgs if m["participant_index"] != p],

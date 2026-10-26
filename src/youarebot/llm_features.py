@@ -1,9 +1,9 @@
 """Признаки детекции машинного текста через перплексию LLM (идея Binoculars).
 
 Для каждой реплики считаем на паре моделей с общим токенизатором:
-- log_ppl — средний NLL токенов под базовой моделью (observer): LLM-текст «предсказуем»;
-- x_ppl — кросс-энтропия между распределением instruct-модели (performer) и observer;
-- binoculars = log_ppl / x_ppl — нормировка убирает зависимость от «сложности» темы,
+- log_ppl: средний NLL токенов под базовой моделью (observer): LLM-текст «предсказуем»;
+- x_ppl: кросс-энтропия между распределением instruct-модели (performer) и observer;
+- binoculars = log_ppl / x_ppl, нормировка убирает зависимость от «сложности» темы,
   у машинного текста отношение заметно ниже (Hans et al., 2024).
 
 Скоры кэшируются по md5 текста в data/processed/llm_cache.parquet, повторный прогон
@@ -54,7 +54,7 @@ class Scorer:
             [tok.eos_token_id] + tok(t, add_special_tokens=False)["input_ids"][: MAX_TOKENS - 1]
             for t in texts
         ]
-        order = np.argsort([len(e) for e in enc])  # реплики похожей длины — меньше паддинга
+        order = np.argsort([len(e) for e in enc])  # реплики похожей длины, меньше паддинга
         out = np.full((len(texts), len(SCORES)), np.nan)
         with torch.no_grad():
             for start in range(0, len(order), BATCH):
@@ -83,7 +83,7 @@ class Scorer:
 
 
 def message_scores(texts: list[str], cache_path: Path, chunk: int = 512) -> pd.DataFrame:
-    """Скоры для всех уникальных реплик с кэшем; индекс — md5 текста.
+    """Скоры для всех уникальных реплик с кэшем; индекс: md5 текста.
 
     Кэш дописывается после каждого куска, так что прерванный расчёт продолжается с места.
     """
@@ -114,7 +114,7 @@ def participant_features(texts_per_row: pd.Series, scores: pd.DataFrame) -> pd.D
             v = s[col].to_numpy(dtype=float)
             feats[f"llm_{col}_mean"] = np.nanmean(v) if len(v) else np.nan
             feats[f"llm_{col}_min"] = np.nanmin(v) if len(v) else np.nan
-        # короткие реплики («ок», «)») почти ничего не говорят о модели — отдельно длинные
+        # короткие реплики («ок», «)») почти ничего не говорят о модели, поэтому отдельно длинные
         long = [_key(t) for t in texts if len(t.strip()) >= 20]
         feats["llm_binoculars_long_mean"] = (
             float(scores.loc[long, "binoculars"].mean()) if long else np.nan

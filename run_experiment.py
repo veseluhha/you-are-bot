@@ -53,7 +53,7 @@ if __name__ == "__main__":
             }
         )
         if not args.no_transformer:
-            # torch — отдельным процессом (конфликт libomp с lightgbm, см. utils.py),
+            # torch отдельным процессом (конфликт libomp с lightgbm, см. utils.py),
             # его run в MLflow вешается на этот же родительский run
             subprocess.run(
                 [sys.executable, str(PROJECT_ROOT / "train_transformer.py")],

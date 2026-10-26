@@ -1,6 +1,6 @@
 """Стекинг второго уровня: логистическая регрессия на логитах OOF-предсказаний.
 
-Вход — OOF и сабмиты уже обученных конфигов (outputs/<run_name>/) и, по желанию,
+Вход: OOF и сабмиты уже обученных конфигов (outputs/<run_name>/) и, по желанию,
 предсказания дообученного трансформера. Второй уровень линейный и с одним коэффициентом
 на модель: в отличие от передачи OOF признаком в бустинг, он не переобучается на шумный
 признак (это видно по конфигу 14).
@@ -51,8 +51,8 @@ def _partner(ids: pd.Series, feats: np.ndarray) -> np.ndarray:
 
 def _message_te(train: pd.DataFrame, test: pd.DataFrame, cfg: dict, cv) -> tuple:
     """Target encoding реплик вторым уровнем: на трейне OOF по тем же фолдам, что и CV
-    стекинга (как и OOF моделей первого уровня), на тесте — словарь по всему трейну.
-    message_knn: true добавляет нечёткий вариант (похожие, а не только такие же реплики)."""
+    стекинга (как и OOF моделей первого уровня), на тесте словарь по всему трейну.
+    message_knn: true добавляет нечёткий вариант (похожие реплики, кроме точно таких же)."""
     from youarebot.message_te import encode, fit_counts, knn_encode, split_messages
 
     msgs = {
@@ -83,7 +83,7 @@ def _message_te(train: pd.DataFrame, test: pd.DataFrame, cfg: dict, cv) -> tuple
     te_test = features(np.arange(len(train)), msgs["test"])
 
     def to_x(te, ids):
-        # вероятности — в логиты, доли совпавших реплик — как есть; то же для собеседника
+        # вероятности переводим в логиты, доли совпавших реплик оставляем как есть; то же для собеседника
         prob = [0, 1, 2] + ([4, 5] if use_knn else [])
         share = [3] + ([6] if use_knn else [])
         partner = _partner(ids, te)

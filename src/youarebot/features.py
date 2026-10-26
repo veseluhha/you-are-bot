@@ -1,7 +1,7 @@
 """Ручные признаки участника диалога.
 
 Признаки считаются по одной строке и не обучаются, поэтому их можно считать один раз
-до кросс-валидации — утечки между фолдами нет.
+до кросс-валидации, утечки между фолдами нет.
 """
 
 import re
@@ -38,7 +38,7 @@ def _text_stats(texts: list[str]) -> dict[str, float]:
         "len_mean": lens.mean(),
         "len_max": lens.max(),
         "len_std": lens.std(),
-        # логарифм — длины сильно скошены (есть реплики на тысячи символов)
+        # логарифм: длины сильно скошены (есть реплики на тысячи символов)
         "len_log_mean": np.log1p(lens).mean(),
         "words_mean": words.mean(),
         "cyr_share": sum(bool(CYR.search(t)) for t in texts) / n,
@@ -54,7 +54,7 @@ def _text_stats(texts: list[str]) -> dict[str, float]:
         "starts_upper_share": sum(t[:1].isupper() for t in texts) / n,
         "ends_dot_share": sum(t.rstrip().endswith(".") for t in texts) / n,
         "empty_share": sum(not t.strip() for t in texts) / n,
-        # следы форматирования: у людей чаще пробел в конце, у ботов — переносы и двойные пробелы
+        # следы форматирования: у людей чаще пробел в конце, у ботов переносы и двойные пробелы
         "trail_ws_share": sum(t[-1:].isspace() for t in texts) / n,
         "lead_ws_share": sum(t[:1].isspace() for t in texts) / n,
         "has_newline_share": sum("\n" in t for t in texts) / n,
@@ -125,7 +125,7 @@ def build_frame(df: pd.DataFrame, with_partner: bool = True) -> pd.DataFrame:
     out = handcrafted(df, with_partner=with_partner)
     out["own_text"] = [" \n ".join(t) for t in df["own_texts"]]
     out["partner_text"] = [" \n ".join(t) for t in df["partner_texts"]]
-    # реплики по отдельности (разделитель \x1e) — для target encoding реплик, см. message_te.py
+    # реплики по отдельности (разделитель \x1e) для target encoding реплик, см. message_te.py
     out["own_msg_text"] = ["\x1e".join(t) for t in df["own_texts"]]
     out["partner_msg_text"] = ["\x1e".join(t) for t in df["partner_texts"]]
     return out
